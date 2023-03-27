@@ -1,0 +1,4 @@
+aiosqlite
+discord.py
+gspread
+python-dotenv
