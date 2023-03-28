@@ -72,8 +72,6 @@ class Registration(commands.Cog):
                 found.set_footer(
                     text="If you believe the email provided is not yours, please contact an organizer immediately.")
 
-                await member.send(embed=found)
-
                 # Registered Hacker Role
                 await member.add_roles(member.guild.get_role(1087192865186254999))
 
@@ -82,12 +80,19 @@ class Registration(commands.Cog):
 
                 # Ensures resource is available before popping
                 async with self.lock:
-                    self.not_registered.pop(i)
+                    try:
+                        self.not_registered.remove(member)
+
+                    except Exception as e:
+                        print(f"Was unable to remove {member.name} from not_registered list")
 
                 sql = 'DELETE FROM notregistered WHERE id=?'
 
                 async with self.bot.db.execute(sql, (member.id,)) as cursor:
                     await self.bot.db.commit()
+
+                await member.send(embed=found)
+                print("Sent message to user")
 
 
     @commands.guild_only()
@@ -103,7 +108,7 @@ class Registration(commands.Cog):
 
             if reg_role in member.roles and not search_str:
 
-                desc = 'We regret to inform you that we are unable to accept your application to participate in DeerHacks at this time. We received a large number of applications, and while we appreciate your interest and effort, we had to make some difficult decisions in the selection process.\n\nWe hope that you understand that this decision was not a reflection of your skills or abilities. We encourage you to attend the hackathon, as we will be offering some exceptional workshops that anyone can participate in.\n\nWe appreciate your interest in DeerHacks and hope to see you at future events.\n\nBest regards, The Mathematical and Computational Sciences Society'
+                desc = 'We regret to inform you that we are unable to accept your application to participate in DeerHacks at this time. We received a large number of applications, and while we appreciate your interest and effort, we had to make some difficult decisions in the selection process.\n\nWe hope that you understand that this decision was not a reflection of your skills or abilities. We still encourage you to join us during the hackathon, as we will be offering some exceptional workshops that anyone can participate in.\n\nWe appreciate your interest in DeerHacks and hope to see you at future events.\n\nBest regards, The DeerHacks Team.'
 
                 denied = discord.Embed(
                     title=f"Hi {member.name},",
@@ -244,13 +249,13 @@ class Registration(commands.Cog):
 
             not_found.set_footer(text="Please contact an organizer immediately for any questions or concerns.")
 
-            await member.send(embed=not_found)
-
             # Hacker Role
             await member.add_roles(member.guild.get_role(1085682655326130316))
 
             async with self.lock:
                 self.not_registered.append(member)
+
+            await member.send(embed=not_found)
 
             sql = 'INSERT INTO notregistered(id) VALUES (?)'
 
